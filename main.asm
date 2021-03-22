@@ -1,27 +1,4 @@
-imprimirTextos macro matriz, size
-    LOCAL loopImprimir
-    push SI
-    push CX
-    push AX
-    push DX
-    LEA SI, OFFSET matriz ;Offset del array menu
-    MOV CX, size ;Tamaño del array
-
-    ;Imprimiendo el texto inicial recorriendo el array
-    loopImprimir:
-        MOV DX, [SI]
-        MOV AH, 9
-        int 21h
-        INC SI
-        INC SI
-    LOOP loopImprimir
-
-    ;Recuperación de los valores originales de los registros y el index
-    pop DX
-    pop AX
-    pop CX
-    pop SI
-endm
+include proced.asm
 
 .model small
 .stack 100h
@@ -57,15 +34,72 @@ nTres db 0ah,0dh, 'Se ha seleccionado el numero 3','$'
 nCuatro db 0ah,0dh, 'Se ha seleccionado el numero 4','$'
 nCinco db 0ah,0dh, 'Se ha seleccionado el numero 5','$'
 
+;ruta del archivo temporal y su manejador
+ruta db "texto.txt",0  
+manejador dw 0
+
+
+;otras cadenas y variables
+msjError db 0ah,0dh, 'Hubo un error en la lectura del archivo.', '$'
+archivoLeido db 0ah,0dh, 'Archivo leido correctamente.', '$'
+rutaPorTeclado dw 30 dup("$")
+lectura db 60 dup("$")
+instruccion db 60 dup("$")
+letra db ?,"$"
+saltoLinea db 0ah, 0dh, "$"
+escribir db ';','$'
+contadorOp db 0
+contadorNum dw 0
+numeros dw 60 dup(0)
+
+;comparadores de instrucciones
+
+sum_a db 'sum','$'
+res_a db 'res','$'
+mul_a db 'mul','$'
+div_a db 'div','$'
+sum_c db '/sum','$'
+res_c db '/res','$'
+mul_c db '/mul','$'
+div_c db '/div','$'
+op_a db 'operacion','$'
+op_c db '/operacion', '$'
+val_a db 'valor', '$'
+val_c db '/valor', '$'
+padre_a db 'operaciones','$'
+padre_c db '/operaciones','$'
+
 ;db -> dato byte -> 8 bits
 ;dw -> dato word -> 16 bits
 ;dd -> doble word -> 32 bits
 .code ;segmento de código
-org 100h
+;org 100h
 ;================== SEGMENTO DE CODIGO ===========================
 	main proc
+        ;======================CARGA DE DATOS AL DS===========================
         MOV AX, @data
         MOV DS, AX
+        ;=================================================================
+
+        pedirRutaPorTeclado rutaPorTeclado ;Pedir la ruta por teclado
+	    abrirArchivo rutaPorTeclado,manejador ;Abrir archivo
+        jc errorApertura ; Verificar si existe un error
+        escribirFin manejador, escribir ;Escribir el EOF al archivo de entrada
+		cerrarArchivo manejador ;Cerrar el archivo
+
+	    abrirArchivo rutaPorTeclado,manejador ;Abrir archivo
+        jc errorApertura ; Verificar si existe un error
+        leerArchivo lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c
+		cerrarArchivo manejador ;Cerrar el archivo
+        imprimirArchivo lectura
+        jmp fin
+
+        errorApertura: ;Imprimir el error y terminar
+            imprimirArchivo msjError ;Imprimir msj de error
+            cerrarArchivo manejador  ;Cerrar el archivo
+            jmp fin ;Saltar al final del programa
+
+
         imprimirTextos menu,8
         mov ah,9
         lea dx,ingreso ;Impresión de cadena para ingreso de una opción del menú
@@ -106,13 +140,14 @@ org 100h
             lea dx, nCuatro
             int 21h
             jmp fin
-        numeroCinco: ;Si se seleccionó la opción 5
+        numeroCinco: ;Si se seleccionó la opción 5, entonces es salida
             mov ah,9
             lea dx, nCinco
             int 21h
             jmp fin
         ;imprimirTextos inicio,9
         fin:
+            
         .exit
 	main endp
 end
