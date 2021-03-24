@@ -1,3 +1,5 @@
+
+;======================IMPRIMIR TEXTO DE ARRAYS===========================
 imprimirTextos macro matriz, size
     LOCAL loopImprimir
     push SI
@@ -22,6 +24,10 @@ imprimirTextos macro matriz, size
     pop CX
     pop SI
 endm
+;=================================================================
+
+
+;======================IMPRIMIR CUALQUIER TEXTO===========================
 
 imprimirArchivo macro direccion
         XOR ax, ax
@@ -30,6 +36,8 @@ imprimirArchivo macro direccion
 	    mov dx, offset direccion
 	    int 21h
 endm
+;=================================================================
+
 
 
 ;======================ABRIR EL ARCHIVO===========================
@@ -54,7 +62,7 @@ endm
 
 
 ;======================PEDIR RUTA POR TECLADO===========================
-pedirRutaPorTeclado macro rutaPorTeclado
+pedirPorTeclado macro rutaPorTeclado
     local pedir, fin_pedir
     lea si, rutaPorTeclado
     pedir:
@@ -69,6 +77,52 @@ pedirRutaPorTeclado macro rutaPorTeclado
 endm
 ;=================================================================
 
+;======================DATOS INICIALES TABLA===========================
+
+iniciarTabla macro
+    <table>
+    <thead>
+    <tr>
+    <th>
+    <b>
+    mov [si],'I'
+    inc si
+    mov [si],'d'
+    inc si
+    </b>
+    </th>
+    <th>
+    <b>
+    mov [si],'O'
+    inc si
+    mov [si],'p'
+    inc si
+    </b>
+    </th>
+    <th>
+    <b>
+    mov [si],'R'
+    inc si
+    mov [si],'e'
+    inc si
+    </b>
+    </th>
+    </tr>
+    </thead>
+    <tbody>    
+endm
+
+
+;======================================================================
+
+
+;======================CERRAR TABLA===========================
+cerrarTabla macro
+    </tbody>
+    </table>    
+endm
+
+;======================================================================
 
 
 ;======================LEER ARCHIVO===========================
@@ -76,6 +130,7 @@ leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_
     local ciclo, finCiclo, getId, getNumero, verificarNumero, verificarId, escribirReporte
     mov si, offset instruccion
     mov di, offset lectura
+    iniciarTabla
     ciclo:
         ;Conseguir caracter de entrada, 1 x 1
         ;imprimirArchivo lectura
@@ -155,6 +210,8 @@ leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_
             ejecutarOp lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, contadorOp , numeros, contadorNum,padre_a,padre_c
             jmp ciclo
         escribirReporte:
+            ;cerrarTabla
+            push si
             imprimirArchivo instruccion
             jmp finCiclo
 
@@ -186,7 +243,7 @@ convertirNumeros macro lectura, numeros, contadorNum
         jne ciclo
 
     finalizar:  
-        limpiarLector lectura
+        limpiarLector lectura, 60
         mov di, offset lectura
         mov cx, ax    
         aam 
@@ -498,6 +555,8 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
         addOp lectura
         jmp salir
     finOperacion:
+        </td>
+        <td>
         push di
         dec contadorNum
         dec contadorNum
@@ -512,12 +571,12 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
         noEsNegativo:
         ;add ah, 30h
         ;add al, 30h
-        mov [si],' '
-        inc si
-        mov [si],'='
-        inc si
-        mov [si],' '
-        inc si
+        ;mov [si],' '
+        ;inc si
+        ;mov [si],'='
+        ;inc si
+        ;mov [si],' '
+        ;inc si
         ;mov [si],ax
         ;aam
         ;add ah,30h
@@ -527,16 +586,8 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
         ;mov [si],al
         ;inc si
         numberToAscii
-        mov [si], '<'
-        inc si
-        mov [si], '/'
-        inc si
-        mov [si], 'b'
-        inc si
-        mov [si], 'r'
-        inc si
-        mov [si], '>'
-        inc si
+        </td>
+        ;saltoHtml
         jmp salir
         esNegativo:
             push bx
@@ -544,12 +595,12 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
             mul bx
             ;add ah, 30h
             ;add al, 30h
-            mov [si],' '
-            inc si
-            mov [si],'='
-            inc si
-            mov [si],' '
-            inc si
+            ;mov [si],' '
+            ;inc si
+            ;mov [si],'='
+            ;inc si
+            ;mov [si],' '
+            ;inc si
             mov [si],'-'
             inc si
             ;mov [si],ax
@@ -561,22 +612,14 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
             ;mov [si],al
             ;inc si
             numberToAscii
-            mov [si], '<'
-            inc si
-            mov [si], '/'
-            inc si
-            mov [si], 'b'
-            inc si
-            mov [si], 'r'
-            inc si
-            mov [si], '>'
-            inc si
+            </td>
+            ;saltoHtml
             pop bx
         ;realizar operacion
     salir: 
         inc contadorOp
         pop di   
-        limpiarLector lectura
+        limpiarLector lectura,11
         mov di, offset lectura
         ;pop cx
         ;pop ax
@@ -632,6 +675,8 @@ addOp macro lectura
     local ciclo, fin
     push di
     mov di, offset lectura
+    <tr>
+    <td>
     ciclo:
         mov cl,[di]
         cmp cl, 24h
@@ -641,12 +686,14 @@ addOp macro lectura
         inc di
         jmp ciclo
     fin:
-        mov [si], ' '
-        inc si
-        mov [si], '='
-        inc si
-        mov [si], ' '
-        inc si
+        ;mov [si], ' '
+        ;inc si
+        ;mov [si], '='
+        ;inc si
+        ;mov [si], ' '
+        ;inc si
+        </td>
+        <td>
         pop di
 endm
 ;=================================================================
@@ -681,19 +728,22 @@ endm
 
 
 ;======================Limpiar lector===========================
-limpiarLector macro lectura
+limpiarLector macro lectura,cantidad
     local limpiar
     push si
     push cx
+    push bx
     lea si, lectura
     mov cl,'$'
     mov ch,0
+    mov bl,cantidad
     limpiar:
         mov [si],cl
         inc si
         inc ch
-        cmp ch,11
+        cmp ch,cantidad
         jne limpiar
+    pop bx
     pop cx
     pop si
 endm
@@ -752,7 +802,7 @@ endm
 ;=================================================================
 
 
-;======================LIMPIAR CONSOLA===========================
+;======================ESPERAR ENTER===========================
 enter macro
     local pedir, fin_pedir
     push ax
@@ -793,7 +843,8 @@ getHora macro hora
     convertirHora 0
     mov al, dh
     convertirHora 1
-
+    saltoHtml
+    ;saltoHtml
 endm
 
 
@@ -804,6 +855,8 @@ endm
 
 convertirHora macro ultimo
     local esCero,verificarUltimo, menor,agregarPuntos,fin
+    push ax
+    push bx
     push cx
     push dx
     cmp al,0
@@ -850,19 +903,89 @@ convertirHora macro ultimo
     fin:
         pop dx
         pop cx
+        pop bx
+        pop ax
 endm
 ;=================================================================
 
 
 
 ;======================CONSEGUIR FECHA===========================
+getFecha macro fecha
+    mov si,offset fecha
+    mov ah, 2ah
+    int 21h
+    ;Aqui se consigue la hora y los registros quedan así:
+    ;CX = año
+    ;DH = mes
+    ;DL = dia
+    ;Mando un número para decirle que es el último
+    xor ax,ax
+    mov al,dl
+    convertirHora 1
+    mov [si],'/'
+    inc si
+    mov al,dh
+    convertirHora 1
+    mov [si],'/'
+    inc si
+    mov ax,cx
+    getYear 5
+    saltoHtml
+    ;saltoHtml
+endm
+;=================================================================
+
+;======================AGREGAR SALTO HTML===========================
+saltoHtml macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'r'
+    inc si
+    mov [si],'>'
+    inc si
+endm
 
 ;=================================================================
 
-
-
-
 ;======================CONVERTIR FECHA===========================
+getYear macro iteracion
+    local conseguido, fin, dividir  
+    push dx
+    push cx
+    push ax
+    push bx
+    
+    mov bx,10
+    mov cx,1
+    dividir:
+        xor dx,dx
+        div bx
+        push dx
+        cmp ax,10
+        jb conseguido
+        jmp dividir
+    conseguido:
+        aam
+        add al,30h 
+        mov [si],al
+        inc si
+        inc cx       
+        cmp cx,iteracion
+        je fin
+        pop dx
+        mov al,dl
+        jne conseguido
+    fin:
+        pop bx
+        pop ax
+        pop cx
+        pop dx
+endm
 
 ;=================================================================
 
@@ -899,7 +1022,7 @@ endm
 
 
 ;======================ESCRIBIR HTML===========================
-writeHtml macro nombre,manejador,errorCreacion,contenido
+writeHtml macro manejador,errorCreacion,contenido
     mov ah,40h
     mov bx,manejador
     getArraySize contenido
@@ -923,3 +1046,381 @@ getArraySize macro array
     fin:
 endm
 ;=================================================================
+
+
+
+;======================MACROS PARA ETIQUETAS TABLA HTML===========================
+
+
+<b> macro
+    mov [si],'<'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</b> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<table> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'a'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'l'
+    inc si
+    mov [si],'e'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<thead> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'h'
+    inc si
+    mov [si],'e'
+    inc si
+    mov [si],'a'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<tr> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'r'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<th> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'h'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<tbody> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'o'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'y'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+<td> macro
+    mov [si],'<'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+
+
+</table> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'a'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'l'
+    inc si
+    mov [si],'e'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</thead> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'h'
+    inc si
+    mov [si],'e'
+    inc si
+    mov [si],'a'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</tr> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si   
+    mov [si],'t'
+    inc si
+    mov [si],'r'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</th> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si   
+    mov [si],'t'
+    inc si
+    mov [si],'h'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</tbody> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si
+    mov [si],'t'
+    inc si
+    mov [si],'b'
+    inc si
+    mov [si],'o'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'y'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+
+</td> macro
+    mov [si],'<'
+    inc si
+    mov [si],'/'
+    inc si   
+    mov [si],'t'
+    inc si
+    mov [si],'d'
+    inc si
+    mov [si],'>'
+    inc si
+endm
+;=================================================================================
+
+
+
+;======================FACTORIAL===========================
+
+factorial macro ingreseNumero,operaciones,resultado,numPorTeclado,numeroUni,opFactorial,saltoLinea, resultNum
+    local ciclo, fin,factorial,continuar,unDig,tresDig,result,uno,tres,parcial,tresDig2,unDig2,noesCero,facdeUno,cuatro,cuatroDig,cuatroDig2
+    imprimirArchivo ingreseNumero
+    imprimirArchivo saltoLinea
+    pedirPorTeclado numPorTeclado
+    getNum numPorTeclado, numeroUni
+    lea si,opFactorial
+    mov bx,1
+    mov cx,ax
+    mov ax,1   
+    mov [si],'0'
+    inc si
+    mov [si],'!'
+    inc si
+    mov [si],'='
+    inc si
+    mov [si],'1'
+    inc si
+    mov [si],';'
+    inc si
+    mov [si], ' '
+    inc si
+    cmp cx,0
+    je fin
+    ciclo:
+        jmp factorial       
+        continuar:
+            mov [si],';'
+            inc si
+            mov [si], ' '
+            inc si
+            add bx,1
+            sub cx,1
+            cmp cx,0
+            jne ciclo
+            jmp result
+        factorial:
+            ;mul bx
+            mov dx,bx
+            add dl,30h
+            mov [si],dl
+            inc si
+            mov [si],'!'
+            inc si
+            mov [si],'='
+            inc si
+            sub dl,1
+            cmp dl,30h
+            jne noesCero
+                mov [si],31h
+                inc si
+                add dl,1
+                jmp facdeUno
+            noesCero:
+                add dl,1
+                mov [si],dl
+                inc si
+                facdeUno:
+                    mov [si],'*'
+                    inc si
+                    cmp ax,999
+                    ja cuatroDig
+                    cmp ax,99
+                    ja tresDig
+                    cmp ax,10
+                    jb unDig
+                    getYear 3
+                    jmp parcial
+            cuatroDig:
+                getYear 5
+                jmp parcial
+            tresDig:
+                getYear 4
+                jmp parcial
+            unDig:
+                convertirHora 1
+                jmp parcial
+            parcial:
+                mul bx
+                mov [si], '='
+                inc si
+                cmp ax,999
+                ja cuatroDig2
+                cmp ax,99
+                ja tresDig2
+                cmp ax,10 
+                jb unDig2
+                getYear 3
+                jmp continuar
+            cuatroDig2:
+                getYear 5
+                jmp continuar
+            tresDig2:
+                getYear 4
+                jmp continuar
+            unDig2:
+                convertirHora 1
+                jmp continuar
+        result:
+            limpiarLector numPorTeclado,5
+            lea si, resultNum
+            ;mov [si],'='
+            ;inc si
+            ;lea si,numPorTeclado
+            cmp ax,999
+            ja cuatro
+            cmp ax,99
+            ja tres
+            cmp ax, 10
+            jb uno
+            getYear 3
+            jmp fin
+            cuatro:
+                getYear 5
+                jmp fin
+            tres:
+                getYear 4
+                jmp fin
+            uno:
+                convertirHora 1
+                jmp fin
+        fin:
+            imprimirArchivo saltoLinea
+            imprimirArchivo operaciones
+            imprimirArchivo saltoLinea
+            imprimirArchivo saltoLinea
+            imprimirArchivo opFactorial
+            imprimirArchivo saltoLinea
+            imprimirArchivo resultado
+            imprimirArchivo resultNum
+
+endm
+;==========================================================
+
+
+
+
+;======================GET NUM POR TECLADO===========================
+getNum macro lectura, numero
+    local ciclo,finalizar,negativo, fin, omitirH
+    push si
+    mov si, offset lectura
+    mov ax,0
+    mov cx,10
+
+    ciclo:
+        mul cx
+        mov bx,ax  
+        xor ax,ax
+        mov al, [si]
+        sub al,48
+        add ax,bx
+        inc si
+        cmp [si],'$'
+        je finalizar
+        jne ciclo
+
+    finalizar:  
+        limpiarLector lectura,5
+        mov numero[0],ax
+        jmp fin                  
+        fin: 
+        
+endm
+;==========================================================

@@ -44,13 +44,13 @@ msjError db 0ah,0dh, 'Hubo un error en la lectura del archivo.', '$'
 archivoLeido db 0ah,0dh, 'Archivo leido correctamente.', '$'
 rutaPorTeclado dw 30 dup("$")
 lectura db 60 dup("$")
-instruccion db 8000 dup("$")
+instruccion db 10000 dup("$")
 letra db ?,"$"
 saltoLinea db 0ah, 0dh, "$"
 escribir db ';','$'
 contadorOp db 0
 contadorNum dw 0
-numeros dw 600 dup(0)
+numeros dw 6000 dup(0)
 
 ;comparadores de instrucciones
 
@@ -71,21 +71,35 @@ padre_c db '/operaciones','$'
 
 ;elementos de hora y fecha
 
-hora db 10 dup("$") ;hora::minuto:segundo
-
+hora db 30 dup("$") ;hora::minuto:segundo
+fecha db 30 dup("$") ;DD/MM/YYYY
 
 
 ;elementos html
-htmlInicio dw '<html><head><title>resultados</title></head>','$'
+htmlTitulo dw '','$'
+htmlDato1 dw '<h1>Practica 3 Arqui 1 Seccion A </h1>','$'
+htmlDato2 dw '<p><b>Estudiante: </b> Joel Rodriguez Santos</p>','$'
+htmlDato3 dw '<p><b>Carnet: </b> 201115018</p>','$'
+htmlFecha db '<p><b>Fecha:</b>','$'
+htmlsignC db '</p>','$'
+htmlHora db '<p><b>Hora:</b>','$'
+htmlInicio dw '<html><head><title>resultados</title>','$'
+cierreHead dw '</head>','$'
 htmlBody dw '<body><p>','$'
 htmlCierre dw '</p></body></html>','$'
-
+htmlStyle dw '<style>table, th, td {border: 1px solid black;}</style>','$'
 ;elementos para crear archivo
 nombreSalida db "res.html",0   
 manejadorSalida dw ?
 errorCreacion db 'Error al crear el archivo','$'
-
-
+ingreseNumero db 'Ingrese un numero','$'
+operaciones db 0dh,0ah,'Operaciones:','$'
+resultado db 0dh,0ah,'El resultado es:', '$'
+numPorTeclado db 5 dup("$") 
+numeroUni dw 4 dup(0)
+opFactorial db 300 dup("$")
+resultNum db 10 dup("$")
+htmlCreado db 0dh,0ah,'Html creado.','$'
 
 ;db -> dato byte -> 8 bits
 ;dw -> dato word -> 16 bits
@@ -98,6 +112,7 @@ errorCreacion db 'Error al crear el archivo','$'
         MOV AX, @data
         MOV DS, AX
         ;=================================================================
+        cls
         imprimirTextos inicio,9
         enter
 
@@ -127,11 +142,12 @@ errorCreacion db 'Error al crear el archivo','$'
                 jne noDisponible
 
             numeroUno: ;Si se seleccionó la opción 1
-                mov ah,9
-                lea dx, nUno
-                int 21h
+                ;mov ah,9
+                ;lea dx, nUno
+                ;int 21h
+                cls
                 imprimirArchivo saltoLinea
-                pedirRutaPorTeclado rutaPorTeclado;Pedir la ruta por teclado
+                pedirPorTeclado rutaPorTeclado;Pedir la ruta por teclado
                 abrirArchivo rutaPorTeclado,manejador ;Abrir archivo
                 jc errorApertura ; Verificar si existe un error
                 escribirFin manejador, escribir ;Escribir el EOF al archivo de entrada
@@ -142,12 +158,6 @@ errorCreacion db 'Error al crear el archivo','$'
                 leerArchivo lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c
                 cerrarArchivo manejador ;Cerrar el archivo
                 ;imprimirArchivo lectura
-                crearHtml nombreSalida,manejadorSalida,errorCreacion
-                writeHtml nombre,manejadorSalida,errorCreacion,htmlInicio 
-                writeHtml nombre,manejadorSalida,errorCreacion,htmlBody
-                writeHtml nombre,manejadorSalida,errorCreacion,instruccion
-                writeHtml nombre,manejadorSalida,errorCreacion,htmlCierre
-                cerrarArchivo manejadorSalida
                 enter
                 jmp menuPrincipal
 
@@ -159,24 +169,53 @@ errorCreacion db 'Error al crear el archivo','$'
 
                 jmp menuPrincipal
             numeroDos: ;Si se seleccionó la opción 2
+                cls
                 mov ah,9
                 lea dx, nDos
                 int 21h
                 enter
                 jmp menuPrincipal
             numeroTres: ;Si se seleccionó la opción 3
-                mov ah,9
-                lea dx, nTres
-                int 21h
+                ;mov ah,9
+                ;lea dx, nTres
+                ;int 21h
+                cls
+                factorial ingreseNumero,operaciones,resultado,numPorTeclado,numeroUni,opFactorial,saltoLinea,resultNum
                 enter
                 jmp menuPrincipal
             numeroCuatro: ;Si se seleccionó la opción 4
-                mov ah,9
-                lea dx, nCuatro
-                int 21h
+                ;mov ah,9
+                ;lea dx, nCuatro
+                ;int 21h
+                pop si
+                cls
+                cerrarTabla
+                getHora hora
+                getFecha fecha
+                crearHtml nombreSalida,manejadorSalida,errorCreacion
+                writeHtml manejadorSalida,errorCreacion,htmlInicio 
+                writeHtml manejadorSalida,errorCreacion,htmlStyle
+                writeHtml manejadorSalida,errorCreacion,cierreHead
+                writeHtml manejadorSalida,errorCreacion,htmlBody
+                writeHtml manejadorSalida,errorCreacion,htmlDato1
+                writeHtml manejadorSalida,errorCreacion,htmlDato2
+                writeHtml manejadorSalida,errorCreacion,htmlDato3
+                writeHtml manejadorSalida,errorCreacion,htmlHora              
+                writeHtml manejadorSalida,errorCreacion,hora
+                writeHtml manejadorSalida,errorCreacion,htmlsignC
+                writeHtml manejadorSalida,errorCreacion,htmlFecha             
+                writeHtml manejadorSalida,errorCreacion,fecha
+                writeHtml manejadorSalida,errorCreacion,htmlsignC
+                writeHtml manejadorSalida,errorCreacion,instruccion
+                writeHtml manejadorSalida,errorCreacion,htmlCierre
+                cerrarArchivo manejadorSalida
+                imprimirArchivo htmlCreado
+                imprimirArchivo saltoLinea
+                limpiarLector instruccion,10000
                 enter
                 jmp menuPrincipal
             numeroCinco: ;Si se seleccionó la opción 5, entonces es salida
+                cls
                 mov ah,9
                 lea dx, nCinco
                 int 21h
@@ -184,6 +223,7 @@ errorCreacion db 'Error al crear el archivo','$'
                 jmp fin
             ;imprimirTextos inicio,9
             noDisponible:
+                cls
                 imprimirArchivo nNoExiste
                 imprimirArchivo saltoLinea
                 enter
