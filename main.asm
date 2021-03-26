@@ -44,11 +44,12 @@ msjError db 0ah,0dh, 'Hubo un error en la lectura del archivo.', '$'
 archivoLeido db 0ah,0dh, 'Archivo leido correctamente.', '$'
 rutaPorTeclado dw 30 dup("$")
 lectura db 60 dup("$")
-instruccion db 10000 dup("$")
+instruccion db 20000 dup("$")
 letra db ?,"$"
 saltoLinea db 0ah, 0dh, "$"
 escribir db ';','$'
 contadorOp db 0
+contadorEspecial db 0
 contadorNum dw 0
 numeros dw 6000 dup(0)
 
@@ -93,6 +94,7 @@ nombreSalida db "res.html",0
 manejadorSalida dw ?
 errorCreacion db 'Error al crear el archivo','$'
 ingreseNumero db 'Ingrese un numero','$'
+ingreseOp db 'Ingrese operacion','$'
 operaciones db 0dh,0ah,'Operaciones:','$'
 resultado db 0dh,0ah,'El resultado es:', '$'
 numPorTeclado db 5 dup("$") 
@@ -100,6 +102,14 @@ numeroUni dw 4 dup(0)
 opFactorial db 300 dup("$")
 resultNum db 10 dup("$")
 htmlCreado db 0dh,0ah,'Html creado.','$'
+
+;elementos para calculadora
+calcOp dw 2 dup("$")
+;countOp dw 0
+calcNum dw 10 dup(0)
+countCalcNum dw 0
+instruccionTemp db 500 dup("$")
+memoriaLlena db 0dh,0ah,'Memoria llena, no se pueden guardar mas','$'
 
 ;db -> dato byte -> 8 bits
 ;dw -> dato word -> 16 bits
@@ -115,7 +125,8 @@ htmlCreado db 0dh,0ah,'Html creado.','$'
         cls
         imprimirTextos inicio,9
         enter
-
+        mov si, offset instruccion
+        iniciarTabla
         menuPrincipal:
             cls
             imprimirTextos menu,8
@@ -147,7 +158,9 @@ htmlCreado db 0dh,0ah,'Html creado.','$'
                 ;int 21h
                 cls
                 imprimirArchivo saltoLinea
+                push si
                 pedirPorTeclado rutaPorTeclado;Pedir la ruta por teclado
+                pop si
                 abrirArchivo rutaPorTeclado,manejador ;Abrir archivo
                 jc errorApertura ; Verificar si existe un error
                 escribirFin manejador, escribir ;Escribir el EOF al archivo de entrada
@@ -155,7 +168,7 @@ htmlCreado db 0dh,0ah,'Html creado.','$'
 
                 abrirArchivo rutaPorTeclado,manejador ;Abrir archivo
                 jc errorApertura ; Verificar si existe un error
-                leerArchivo lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c
+                leerArchivo lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c,contadorEspecial
                 cerrarArchivo manejador ;Cerrar el archivo
                 ;imprimirArchivo lectura
                 enter
@@ -174,20 +187,23 @@ htmlCreado db 0dh,0ah,'Html creado.','$'
                 lea dx, nDos
                 int 21h
                 enter
+                calculadora numPorTeclado,calcOp,contadorOp,calcNum,countCalcNum,ingreseNumero,ingreseOp,numeroUni,instruccionTemp,instruccion,memoriaLlena
                 jmp menuPrincipal
             numeroTres: ;Si se seleccionó la opción 3
                 ;mov ah,9
                 ;lea dx, nTres
                 ;int 21h
                 cls
+                push si
                 factorial ingreseNumero,operaciones,resultado,numPorTeclado,numeroUni,opFactorial,saltoLinea,resultNum
+                pop si
                 enter
                 jmp menuPrincipal
             numeroCuatro: ;Si se seleccionó la opción 4
                 ;mov ah,9
                 ;lea dx, nCuatro
                 ;int 21h
-                pop si
+                ;pop si
                 cls
                 cerrarTabla
                 getHora hora
@@ -211,7 +227,10 @@ htmlCreado db 0dh,0ah,'Html creado.','$'
                 cerrarArchivo manejadorSalida
                 imprimirArchivo htmlCreado
                 imprimirArchivo saltoLinea
-                limpiarLector instruccion,10000
+                limpiarLector instruccion,20000
+                mov contadorOp,00
+                lea si, instruccion
+                iniciarTabla
                 enter
                 jmp menuPrincipal
             numeroCinco: ;Si se seleccionó la opción 5, entonces es salida

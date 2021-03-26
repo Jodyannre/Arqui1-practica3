@@ -126,15 +126,16 @@ endm
 
 
 ;======================LEER ARCHIVO===========================
-leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c
+leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, numeros, contadorNum,saltoLinea,padre_a,padre_c,contadorEspecial
     local ciclo, finCiclo, getId, getNumero, verificarNumero, verificarId, escribirReporte
-    mov si, offset instruccion
+    ;iniciarTabla
+    ;mov si, offset instruccion
+    ;pop si
     mov di, offset lectura
-    iniciarTabla
     ciclo:
         ;Conseguir caracter de entrada, 1 x 1
-        ;imprimirArchivo lectura
-        ;imprimirArchivo saltoLinea
+        imprimirArchivo lectura
+        imprimirArchivo saltoLinea
         mov ah, 3Fh
         mov bx, manejador
         mov cx, 1
@@ -164,6 +165,9 @@ leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_
 
         cmp letra, 09h
         je ciclo
+
+        cmp letra, 20h
+        jle ciclo
 
         cmp letra, 'A'
         jb getNumero
@@ -207,7 +211,7 @@ leerArchivo macro lectura, manejador, letra, instruccion, contadorOp, sum_a,sum_
             jmp ciclo
 
         verificarId:
-            ejecutarOp lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, contadorOp , numeros, contadorNum,padre_a,padre_c
+            ejecutarOp lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, contadorOp , numeros, contadorNum,padre_a,padre_c,contadorEspecial
             jmp ciclo
         escribirReporte:
             ;cerrarTabla
@@ -223,7 +227,7 @@ endm
 ;======================Convertir a número===========================
 
 convertirNumeros macro lectura, numeros, contadorNum
-    local ciclo,finalizar,negativo, fin, omitirH
+    local ciclo,finalizar,negativo, fin, omitirH, continuar, continuar,tres,cuatro,uno
     push si
 
     mov si, offset lectura
@@ -246,17 +250,40 @@ convertirNumeros macro lectura, numeros, contadorNum
         limpiarLector lectura, 60
         mov di, offset lectura
         mov cx, ax    
-        aam 
-        add ah, 30h
-        add al, 30h   
-        pop si  
-        cmp ah,30h
-        je omitirH            
-        mov [si],ah
-        inc si
-        omitirH:
-        mov [si],al
-        inc si 
+        pop si
+        ;===============Probando números más grandes
+
+        cmp ax,999
+        ja cuatro
+        cmp ax,99
+        ja tres
+        cmp ax, 10
+        jb uno
+        getYear 3
+        jmp continuar
+        cuatro:
+            getYear 5
+            jmp continuar
+        tres:
+            getYear 4
+            jmp continuar
+        uno:
+            convertirHora 1
+            jmp continuar
+        ;=========================================
+
+        ;aam 
+        ;add ah, 30h
+        ;add al, 30h   
+        ;pop si  
+        ;cmp ah,30h
+        ;je omitirH            
+        ;mov [si],ah
+        ;inc si
+        ;omitirH:
+        ;mov [si],al
+        ;inc si 
+        continuar:
         popf
         js negativo  
         ;push ax  
@@ -314,10 +341,10 @@ endm
 ;=================================================================
 
 ;======================Verificar id===========================
-ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, contadorOp, numeros, contadorNum,padre_a,padre_c
+ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,val_c,op_a,op_c, contadorOp, numeros, contadorNum,padre_a,padre_c,contadorEspecial
     ;push ax
     ;push cx
-    local agregarDiv, agregarMulti, agregarOp, agregarResta, agregarSuma, exeDiv, exeMulti, exeResta, exeSuma, salir,finOperacion, esNegativo, divNegativo,continuarDiv, mulNegativo, continuarMul,resNegativo, res2Negativo, continuarRes, sumNegativo, sum2Negativo, continuarSum, esMayor, divNegativo, div2Negativo, div2tNegativo, mulNegativo, mul2Negativo, mul2tNegativo
+    local agregarDiv, agregarMulti, agregarOp, agregarResta, agregarSuma, exeDiv, exeMulti, exeResta, exeSuma, salir,finOperacion, esNegativo, divNegativo,continuarDiv, mulNegativo, continuarMul,resNegativo, res2Negativo, continuarRes, sumNegativo, sum2Negativo, continuarSum, esMayor, divNegativo, div2Negativo, div2tNegativo, mulNegativo, mul2Negativo, mul2tNegativo, cuatro,tres,uno,continuar,cinco
     comparar lectura, sum_a
     je agregarSuma
     comparar lectura, res_a
@@ -347,6 +374,8 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
     je salir
     comparar lectura, op_c
     je finOperacion
+
+    jmp agregarOp
 
     jmp salir
 
@@ -552,14 +581,20 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
             jmp salir
 
     agregarOp:
+        cmp contadorEspecial,1
+        je finOperacion
         addOp lectura
+        inc contadorEspecial
         jmp salir
     finOperacion:
+        dec contadorEspecial
+        inc contadorOp
         </td>
         <td>
+        dec contadorNum
+        dec contadorNum
         push di
-        dec contadorNum
-        dec contadorNum
+        
         mov di,contadorNum
         mov ax, numeros[di]
         ;cmp ax,0
@@ -585,8 +620,21 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
         ;inc si
         ;mov [si],al
         ;inc si
-        numberToAscii
+        ;numberToAscii
+        ;===============Probando números más grandes
+        cmp ax,9999
+        ja cinco
+        cmp ax,999
+        ja cuatro
+        cmp ax,99
+        ja tres
+        cmp ax, 10
+        jb uno
+        getYear 3
+        jmp continuar
+        ;=========================================
         </td>
+        </tr>
         ;saltoHtml
         jmp salir
         esNegativo:
@@ -611,13 +659,38 @@ ejecutarOp macro lectura, sum_a,sum_c,res_a,res_c,mul_a,mul_c,div_a,div_c,val_a,
             ;inc si
             ;mov [si],al
             ;inc si
-            numberToAscii
-            </td>
-            ;saltoHtml
-            pop bx
+            ;numberToAscii
+            ;===============Probando números más grandes
+            cmp ax,9999
+            ja cinco
+            cmp ax,999
+            ja cuatro
+            cmp ax,99
+            ja tres
+            cmp ax, 10
+            jb uno
+            getYear 3
+            jmp continuar
+            cinco:
+                getYear 6
+                jmp continuar
+            cuatro:
+                getYear 5
+                jmp continuar
+            tres:
+                getYear 4
+                jmp continuar
+            uno:
+                convertirHora 1
+                jmp continuar
+            ;=========================================
+            continuar:
+                </td>
+                </tr>
+                ;saltoHtml
+                pop bx
         ;realizar operacion
     salir: 
-        inc contadorOp
         pop di   
         limpiarLector lectura,11
         mov di, offset lectura
@@ -733,16 +806,18 @@ limpiarLector macro lectura,cantidad
     push si
     push cx
     push bx
+    push dx
     lea si, lectura
     mov cl,'$'
-    mov ch,0
-    mov bl,cantidad
+    mov dx,0
+    ;mov bl,cantidad
     limpiar:
         mov [si],cl
         inc si
-        inc ch
-        cmp ch,cantidad
+        inc dx
+        cmp dx,cantidad
         jne limpiar
+    pop dx
     pop bx
     pop cx
     pop si
@@ -912,6 +987,7 @@ endm
 
 ;======================CONSEGUIR FECHA===========================
 getFecha macro fecha
+    push si
     mov si,offset fecha
     mov ah, 2ah
     int 21h
@@ -933,6 +1009,7 @@ getFecha macro fecha
     getYear 5
     saltoHtml
     ;saltoHtml
+    pop si
 endm
 ;=================================================================
 
@@ -962,6 +1039,7 @@ getYear macro iteracion
     
     mov bx,10
     mov cx,1
+
     dividir:
         xor dx,dx
         div bx
@@ -1034,6 +1112,7 @@ endm
 
 ;======================GET SIZE ARRAY===========================
 getArraySize macro array
+    push si
     local ciclo,fin
     mov cx,0
     lea si,array
@@ -1044,6 +1123,7 @@ getArraySize macro array
         inc cx
         jmp ciclo
     fin:
+        pop si
 endm
 ;=================================================================
 
@@ -1265,6 +1345,7 @@ factorial macro ingreseNumero,operaciones,resultado,numPorTeclado,numeroUni,opFa
     imprimirArchivo saltoLinea
     pedirPorTeclado numPorTeclado
     getNum numPorTeclado, numeroUni
+    limpiarRegistros
     lea si,opFactorial
     mov bx,1
     mov cx,ax
@@ -1389,6 +1470,9 @@ factorial macro ingreseNumero,operaciones,resultado,numPorTeclado,numeroUni,opFa
             imprimirArchivo saltoLinea
             imprimirArchivo resultado
             imprimirArchivo resultNum
+            ;limpiarLector opFactorial 300
+            ;limpiarLector resultNum 10
+
 
 endm
 ;==========================================================
@@ -1421,6 +1505,485 @@ getNum macro lectura, numero
         mov numero[0],ax
         jmp fin                  
         fin: 
+        pop si   
+endm
+;==========================================================
+
+
+
+;======================CALCULADORA===========================
+
+calculadora macro numPorTeclado,calcOp,contadorOp,calcNum,countCalcNum,ingreseNumero,ingreseOp,numeroUni,instruccionTemp,instruccion,memoriaLlena
+    local unDig,ciclo, esNegativo,esPositivo,operar,ingOp,guardar,restarUno
+    push si
+    lea si,instruccionTemp
+    ;mov ax, contadorOp
+    <tr>
+    <td>
+    mov [si],'O'
+    inc si
+    mov [si],'p'
+    inc si
+    mov al,contadorOp
+    cmp contadorOp,10
+    jb unDig
+    getYear 3
+    </td>
+    <td>
+    ;push di
+    jmp ciclo
+    unDig:       
+        convertirHora 1
+        </td>
+        <td>
+        ;push di
+    ciclo:
+        imprimirArchivo ingreseNumero
+        imprimirArchivo saltoLinea
+        push si
+        pedirPorTeclado numPorTeclado
+        pop si
+        mov di, offset numPorTeclado
+        cmp [di],'-'
+        je esNegativo
+        jmp esPositivo
+        esNegativo:
+            mov [si],'('
+            inc si
+            mov [si],'-'
+            inc si
+            mov [si],')'
+            inc si            
+            inc di
+            mov ah, [di]
+            inc di
+            mov al, [di]
+            limpiarLector numPorTeclado,5
+            mov numPorTeclado[0],ah
+            mov numPorTeclado[1],al
+            getNum numPorTeclado, numeroUni
+            ;ax tiene el numero
+            ;push di
+            mov di, countCalcNum
+            neg ax
+            mov calcNum[di],ax
+            inc countCalcNum
+            inc countCalcNum
+            ;mov ax,countCalcNum
+            ;pop di
+            ;mov ax,countCalcNum
+            ;Aqui tengo que agregar el número a la instrucción
+            addNumInstruccion
+            cmp countCalcNum,4
+            je operar
+            jmp ingOp
+        esPositivo:
+            getNum numPorTeclado, numeroUni
+            ;ax tiene el numero
+            ;push di
+            mov di, countCalcNum
+            mov calcNum[di],ax
+            inc countCalcNum
+            inc countCalcNum
+            ;mov ax,countCalcNum
+            ;pop di
+            ;mov ax,countCalcNum
+            ;Aqui tengo que agregar el número a la instrucción
+            addNumInstruccion
+            cmp countCalcNum,4
+            je operar
+            jmp ingOp
+        ingOp:
+            imprimirArchivo ingreseOp
+            imprimirArchivo saltoLinea
+            push si
+            ;limpiarLector calcOp,2
+            pedirPorTeclado calcOp
+            mov cx, calcOp[0]
+            cmp cx,';'
+            pop si
+            je guardar           
+            mov cx, calcOp[0]
+            mov [si], cx
+            inc si
+            mov bx, countCalcNum
+            cmp bx,4
+            je operar
+            jne ciclo
+
+    operar:
+        mov cx, calcOp[0]
+        opCalculadora countCalcNum,calcNum,memoriaLlena
+        jmp ingOp
+    guardar:
+        ;pop si
+        ;mov bx,countCalcNum
+        ;cmp bx,4
+        ;jb ciclo
+        guardarOp contadorNum,calcNum,instruccionTemp,contadorOp,instruccion,memoriaLlena
+        mov countCalcNum,00
+        jmp salir:
+    salir:
+
+endm
+
+
+;==========================================================
+
+
+;======================AGREGAR NÚMERO A INSTRUCCIÓN==============================
+
+addNumInstruccion macro
+;Voy a usar bx para traer el número
+    local continuar, convertirPositivo,cuatro,tres,uno,fin
+    test ax,ax
+    js convertirPositivo
+    jmp continuar
+    convertirPositivo:
+        neg ax
+    continuar:
+        cmp ax,999
+        ja cuatro
+        cmp ax,99
+        ja tres
+        cmp ax, 10
+        jb uno
+        getYear 3
+        jmp fin
+        cuatro:
+            getYear 5
+            jmp fin
+        tres:
+            getYear 4
+            jmp fin
+        uno:
+            convertirHora 1
+            jmp fin
+    fin:
+endm
+
+
+;================================================================================
+    
+    
+
+;======================OPERACION DE CALCULADORA==============================
+
+opCalculadora macro contadorNum,numeros,texto
+local exeDiv, exeMulti, exeResta, exeSuma, salir,esNegativo, divNegativo,continuarDiv, mulNegativo, continuarMul,resNegativo, res2Negativo, continuarRes, sumNegativo, sum2Negativo, continuarSum, esMayor, divNegativo, div2Negativo, div2tNegativo, mulNegativo, mul2Negativo, mul2tNegativo, cuatro,tres,uno,continuar,cinco
+
+
+cmp cx,'+'
+je exeSuma
+cmp cx,'-'
+je exeResta
+cmp cx,'*'
+je exeMulti
+cmp cx,'/'
+je exeDiv
+
+exeSuma:
+        ;pop ax
+        push si
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        mov bx, ax
+        ;pop ax
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+
+        test ax,ax
+        js sumNegativo
+        add ax,bx
+        jmp continuarSum
+
+        sumNegativo:
+            neg ax
+            test bx,bx
+            js sum2Negativo
+            sub ax,bx
+            neg ax
+            jmp continuarSum
+
+            sum2Negativo:
+                sub ax,bx
+                neg ax
+                jmp continuarSum
+
+        continuarSum:
+            ;push ax
+            mov numeros[si],ax
+            pop si
+            ;test ax,ax
+            ;pushf
+            inc contadorNum
+            inc contadorNum      
+            jmp salir
+    exeResta:
+        ;imprimirArchivo memoriaLlena
+        ;pop ax
+        push si
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        mov bx, ax
+        ;pop ax
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+
+        test ax,ax
+        js resNegativo:
+        sub ax,bx
+        jmp continuarRes
+        ;push ax
+
+        resNegativo:
+            neg ax
+            test bx,bx
+            js res2Negativo
+            add ax,bx
+            neg ax
+            jmp continuarRes
+
+            res2Negativo:
+                ;neg bx
+                add ax,bx
+                neg ax
+                jmp continuarRes
+
         
+        continuarRes:
+            mov numeros[si],ax
+            pop si
+            ;test ax,ax
+            ;pushf
+            inc contadorNum
+            inc contadorNum
+            jmp salir
+    exeMulti:   
+        ;pop ax
+        push si
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        mov bx, ax
+        ;pop ax
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        xor dx,dx
+        test ax,ax
+        js mulNegativo
+        test bx,bx
+        js mul2Negativo
+        mul bx
+        jmp continuarMul
+        mulNegativo:
+            neg ax
+            test bx,bx
+            js mul2tNegativo
+            mul bx
+            neg ax
+            jmp continuarMul   
+        mul2tNegativo:
+            neg bx
+            mul bx 
+            jmp continuarMul              
+        ;push ax
+        mul2Negativo:
+            neg bx
+            mul bx
+            neg ax
+            jmp continuarMul
+        continuarMul:
+            mov numeros[si],ax
+            pop si
+            ;test ax,ax
+            ;pushf
+            inc contadorNum
+            inc contadorNum
+            jmp salir
+
+    exeDiv:
+        ;pop ax
+        push si
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        mov bx, ax
+        ;pop ax
+        dec contadorNum
+        dec contadorNum
+        mov si,contadorNum
+        mov ax, numeros[si]
+        xor dx,dx
+        test ax,ax
+        js divNegativo
+        test bx,bx
+        js div2Negativo
+        div bx
+        jmp continuarDiv
+        divNegativo:
+            neg ax
+            test bx,bx
+            js div2tNegativo
+            xor dx,dx
+            div bx
+            neg ax
+            jmp continuarDiv   
+        div2tNegativo:
+            neg bx
+            xor dx,dx
+            div bx 
+            jmp continuarDiv               
+        ;push ax
+        div2Negativo:
+            neg bx
+            xor dx,dx
+            div bx
+            neg ax
+            jmp continuarDiv
+        continuarDiv:
+            mov numeros[si],ax
+            pop si
+            ;test ax,ax
+            ;pushf
+            inc contadorNum
+            inc contadorNum
+            jmp salir
+
+        salir:
+endm
+
+;==========================================================
+
+
+
+;======================GUARDAR LA OPERACIÓN DE LA CALCULADORA==============================
+guardarOp macro contadorNum,calcNum,instruccionTemp,contadorOp,instruccion,memoriaLlena
+    local finOperacion,esNegativo,noEsNegativo,cinco,cuatro,tres,uno,continuar,salir,esMayor,esMenor,fin
+    finOperacion:
+        </td>
+        <td>
+        ;dec contadorNum
+        ;dec contadorNum
+        push di
+        
+        mov di,contadorNum
+        mov ax, calcNum[di]
+
+        test ax,ax
+        js esNegativo
+        noEsNegativo:
+
+        ;===============Probando números más grandes
+        cmp ax,9999
+        ja cinco
+        cmp ax,999
+        ja cuatro
+        cmp ax,99
+        ja tres
+        cmp ax, 10
+        jb uno
+        getYear 3
+        jmp continuar
+        ;=========================================
+        </td>
+        </tr>
+        ;saltoHtml
+        jmp salir
+        esNegativo:
+            ;push bx
+            mov bx,-1
+            mul bx
+            mov [si],'-'
+            inc si
+            ;===============Probando números más grandes
+            cmp ax,9999
+            ja cinco
+            cmp ax,999
+            ja cuatro
+            cmp ax,99
+            ja tres
+            cmp ax, 10
+            jb uno
+            getYear 3
+            jmp continuar
+            cinco:
+                getYear 6
+                jmp continuar
+            cuatro:
+                getYear 5
+                jmp continuar
+            tres:
+                getYear 4
+                jmp continuar
+            uno:
+                convertirHora 1
+                jmp continuar
+            ;=========================================
+            continuar:
+                </td>
+                </tr>
+                ;pop bx
+
+    salir: 
+        pop di
+        cmp contadorOp,9
+        jle esMenor   
+        jg esMayor    
+        esMenor:
+            lea di, instruccionTemp
+            pop si ;Recuperar instrucción principal
+            copiar instruccionTemp,instruccion
+            inc contadorOp
+            jmp fin
+        esMayor:
+            pop si ;Recuperar instrucción principal
+            imprimirArchivo memoriaLlena
+            enter
+            jmp fin
+        fin:
+            limpiarLector instruccionTemp,500
+            ;push si
+endm
+
+;================================================================================================
+
+
+
+
+
+
+
+
+;======================COPIAR================================================
+copiar macro fuente, destino
+local ciclo, fin
+;push si
+;push di
+;lea di, fuente
+;lea si, destino
+    ciclo:
+        cmp [di],'$'
+        je fin
+        mov ax, [di]
+        mov [si],ax
+        inc si
+        inc di
+        jmp ciclo
+    fin:
+;pop di
+;pop si
 endm
 ;==========================================================
